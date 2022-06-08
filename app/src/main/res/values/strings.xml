@@ -1,0 +1,43 @@
+<resources>
+    <string name="app_name">Organizze (Clone)</string>
+
+    <!-- Tela Intro_01 -->
+    <string name="intro_01_texto01">Organize as suas contas \n onde onde estiver</string>
+    <string name="intro_01_texto02">Simples e Fácil de usar</string>
+
+    <!-- Tela Intro_02 -->
+    <string name="intro_02_texto01">Saiba para onde está indo o seu dinheiro</string>
+    <string name="intro_02_texto02">Categorizando os seus lançamentos e \nvendo o destino de cada centavo</string>
+
+    <!-- Tela Intro_03 -->
+    <string name="intro_03_texto01">Nunca mais esqueça de pagar uma conta</string>
+    <string name="intro_03_texto02">Receba alertas quando quiser</string>
+
+    <!-- Tela Intro_04 -->
+    <string name="intro_04_texto01">Tudo organizado no \ncelular ou computador</string>
+    <string name="intro_04_texto02">Use o Organizze no seu smartphone\n ou acessando pelo site</string>
+
+    <!-- Tela Intro_Cadastro -->
+    <string name="intro_cadastro_texto01">Crie a sua contra grátis</string>
+    <string name="intro_cadastro_texto02">Junte-se a mais de meio milhão\n de pessoas e comece já</string>
+    <string name="intro_botao_cadastre_se">Cadastre-se</string>
+    <string name="intro_botao_login">Já tenho uma conta</string>
+
+    <!-- Tela Cadastrar e Entrar -->
+    <string name="campo_nome">Nome</string>
+    <string name="campo_email">Email</string>
+    <string name="campo_senha">Senha</string>
+    <string name="botao_cadastrar">Cadastrar</string>
+    <string name="botao_entrar">Entrar</string>
+    <string name="titulo_entrar">Acesse a sua conta</string>
+    <string name="title_activity_principal">PrincipalActivity</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+
+</resources>
