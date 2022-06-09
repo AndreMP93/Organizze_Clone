@@ -25,8 +25,8 @@
         android:layout_marginBottom="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:menu_colorNormal="@color/vermelho_200"
-        app:menu_colorPressed="@color/vermelho_200"
+        app:menu_colorNormal="@color/ciano_200"
+        app:menu_colorPressed="@color/ciano_500"
         fab:menu_icon="@drawable/ic_add_24">
 
         <com.github.clans.fab.FloatingActionButton

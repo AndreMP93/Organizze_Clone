@@ -14,7 +14,9 @@
     <color name="ciano_200">#01C7D2</color>
     <color name="ciano_500">#00B2BC</color>
     <color name="ciano_700">#FF018786</color>
-    <color name="vermelho_200">#FF706A</color>
-    <color name="cor_receita">#00BE8B</color>
-    <color name="cor_despesa">#E66560</color>
+    <color name="vermelho_200">#E44C47</color>
+    <color name="cor_receita">#00D39E</color>
+    <color name="cor_receita_700">#00BE8B</color>
+    <color name="cor_despesa">#FF706A</color>
+    <color name="cor_despesa_700">#DF615C</color>
 </resources>

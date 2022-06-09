@@ -1,5 +1,6 @@
 package com.example.organizzeclone.activity
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
@@ -32,20 +33,18 @@ class TesteActivity : AppCompatActivity() {
 
         fabDespesa = findViewById(R.id.menu_despesa)
         fabDespesa.setOnClickListener {
-            Snackbar.make(
-                findViewById(R.id.tela_teste),
-                "DESPESA",
-                Snackbar.LENGTH_LONG
-            ).show()
+            startActivity(Intent(
+                applicationContext,
+                DespesaActivity::class.java
+            ))
         }
 
         fabReceita = findViewById(R.id.menu_receita)
         fabReceita.setOnClickListener {
-            Snackbar.make(
-                findViewById(R.id.tela_teste),
-                "RECEITA",
-                Snackbar.LENGTH_LONG
-            ).show()
+            startActivity(Intent(
+                applicationContext,
+                ReceitaActivity::class.java
+            ))
         }
     }
 }

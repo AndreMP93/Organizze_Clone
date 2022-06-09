@@ -10,16 +10,24 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.OrganizzeClone">
         <activity
+            android:name=".activity.DespesaActivity"
+            android:theme="@style/DespesaTheme"
+            android:exported="false" />
+        <activity
+            android:name=".activity.ReceitaActivity"
+            android:theme="@style/Theme.OrganizzeClone.Receita"
+            android:exported="false" />
+        <activity
             android:name=".activity.TesteActivity"
             android:exported="false" />
         <activity
             android:name=".activity.EntrarActivity"
-            android:parentActivityName=".activity.MainActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:parentActivityName=".activity.MainActivity" />
         <activity
             android:name=".activity.CadastrarActivity"
-            android:parentActivityName=".activity.MainActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:parentActivityName=".activity.MainActivity" />
         <activity
             android:name=".activity.MainActivity"
             android:exported="true">
