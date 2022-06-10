@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import com.example.organizzeclone.config.ConfiguracaoFirebase
 import com.example.organizzeclone.model.Usuario
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.*
@@ -46,7 +47,7 @@ class EntrarActivity : AppCompatActivity() {
         campoEmail = findViewById(R.id.editTextEntrarEmail)
         campoSenha = findViewById(R.id.editTextEntrarSenha)
         botaoEntrar = findViewById(R.id.buttonEntrar)
-        autenticacao = Firebase.auth
+        autenticacao = ConfiguracaoFirebase.getFirebaseAutenticacao()
     }
 
     private fun validarLogin(usuario: Usuario){

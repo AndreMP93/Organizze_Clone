@@ -1,13 +1,12 @@
 package com.example.organizzeclone.model
 
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.ktx.Firebase
+import com.example.organizzeclone.config.ConfiguracaoFirebase
+import com.google.firebase.database.Exclude
 
-class Usuario(var nome: String, var email: String, var senha: String) {
+class Usuario(var nome: String, var email: String, @get: Exclude var senha: String) {
     fun salvarUsuarios(){
-        val reerenciaFirebase = FirebaseDatabase.getInstance().reference
+        val referenciaFirebaseDatabase = ConfiguracaoFirebase.getFirebaseDatabase()
+        referenciaFirebaseDatabase.child("usuario")
+            .child(this.email.replace(".", "")).setValue(this)
     }
 }
