@@ -2,6 +2,7 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/telaReceita"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".activity.ReceitaActivity">
@@ -19,7 +20,7 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <EditText
-            android:id="@+id/editTextValorDespesa"
+            android:id="@+id/editTextValorReceita"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/transparente"
@@ -33,7 +34,7 @@
     </LinearLayout>
 
     <EditText
-        android:id="@+id/editTextCategoriaDespesa"
+        android:id="@+id/editTextCategoriaReceita"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
@@ -44,14 +45,14 @@
         android:inputType="textPersonName"
         android:minHeight="48dp"
         android:textColor="@color/black"
-        app:layout_constraintBottom_toTopOf="@+id/editTextDescricaoDespesa"
+        app:layout_constraintBottom_toTopOf="@+id/editTextDescricaoReceita"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editTextDataDespesa" />
+        app:layout_constraintTop_toBottomOf="@+id/editTextDataReceita" />
 
     <EditText
-        android:id="@+id/editTextDataDespesa"
+        android:id="@+id/editTextDataReceita"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
@@ -62,7 +63,7 @@
         android:inputType="date"
         android:minHeight="48dp"
         android:textColor="@color/black"
-        app:layout_constraintBottom_toTopOf="@+id/editTextCategoriaDespesa"
+        app:layout_constraintBottom_toTopOf="@+id/editTextCategoriaReceita"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
@@ -71,7 +72,7 @@
         app:layout_constraintVertical_chainStyle="packed" />
 
     <EditText
-        android:id="@+id/editTextDescricaoDespesa"
+        android:id="@+id/editTextDescricaoReceita"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
@@ -85,10 +86,10 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/editTextCategoriaDespesa" />
+        app:layout_constraintTop_toBottomOf="@+id/editTextCategoriaReceita" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fabSalvarDespesa"
+        android:id="@+id/fabSalvarReceita"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="24dp"
