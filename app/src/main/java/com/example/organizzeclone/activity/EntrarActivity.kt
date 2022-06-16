@@ -11,8 +11,6 @@ import com.example.organizzeclone.config.ConfiguracaoFirebase
 import com.example.organizzeclone.model.Usuario
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.*
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 
 class EntrarActivity : AppCompatActivity() {
 
@@ -80,7 +78,7 @@ class EntrarActivity : AppCompatActivity() {
         startActivity(
             Intent(
                 application,
-                TesteActivity::class.java
+                InicialActivity::class.java
             )
         )
         finish()

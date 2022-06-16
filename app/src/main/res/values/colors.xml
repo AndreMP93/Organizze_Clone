@@ -11,6 +11,7 @@
     <color name="transparente">#00000000</color>
     <color name="azul">#3D6CF6</color>
     <color name="cinza">#CCCCCC</color>
+    <color name="cinza_escuro">#8E8D8D</color>
     <color name="ciano_200">#01C7D2</color>
     <color name="ciano_500">#00B2BC</color>
     <color name="ciano_700">#FF018786</color>

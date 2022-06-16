@@ -18,7 +18,8 @@
             android:theme="@style/Theme.OrganizzeClone.Receita"
             android:exported="false" />
         <activity
-            android:name=".activity.TesteActivity"
+            android:name=".activity.InicialActivity"
+            android:theme="@style/IncialTheme"
             android:exported="false" />
         <activity
             android:name=".activity.EntrarActivity"

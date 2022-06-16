@@ -79,7 +79,7 @@ class MainActivity : IntroActivity() {
         startActivity(
             Intent(
                 application,
-                TesteActivity::class.java
+                InicialActivity::class.java
             )
         )
     }

@@ -1,5 +1,8 @@
 <resources>
     <string name="app_name">Organizze (Clone)</string>
+    <string name="valor">R$</string>
+    <string name="categoria">Categoria</string>
+    <string name="descricao">Descrição</string>
 
     <!-- Tela Intro_01 -->
     <string name="intro_01_texto01">Organize as suas contas \n onde onde estiver</string>
@@ -45,5 +48,10 @@
     <string name="dataReceita">Ex.: 09/06/2022</string>
     <string name="categoriaReceita">Ex.: Salário</string>
     <string name="descricaoReceita">Ex.: Salário do mês ...</string>
+
+    <!-- Tela Inicial -->
+    <string name="saldoTotal">Saldo Total</string>
+    <string name="botaoSair">Sair</string>
+    <string name="saladacao">Bem-vindo </string>
 
 </resources>

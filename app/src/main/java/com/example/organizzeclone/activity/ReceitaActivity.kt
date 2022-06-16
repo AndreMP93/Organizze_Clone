@@ -60,6 +60,7 @@ class ReceitaActivity : AppCompatActivity() {
                                         "R")
         val receitaAtualizada = receitaTotal + receitaGerada
         movimentacao.salvarBD()
+        println("TESTE: a= ${receitaAtualizada} - T= ${receitaTotal} + G = ${receitaGerada}")
         atualizarReceitaTotal(receitaAtualizada)
 
     }
@@ -103,7 +104,7 @@ class ReceitaActivity : AppCompatActivity() {
             }
 
         }
-        userReferencia.child(idUsuario.toString()).child("receitaTotal")
+        userReferencia.child(idUsuario.toString()).child("receitaTotal").addValueEventListener(postListener)
 
 
     }
