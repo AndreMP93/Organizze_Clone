@@ -1,24 +1,24 @@
 package com.example.organizzeclone.activity
 
+import android.annotation.SuppressLint
+import android.content.DialogInterface
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.organizzeclone.R
 import com.example.organizzeclone.adapter.AdapterMovimentacao
 import com.example.organizzeclone.config.ConfiguracaoFirebase
-import com.example.organizzeclone.model.Movimentacao
-import com.example.organizzeclone.model.Usuario
+import com.example.organizzeclone.helper.RealtimeDatabase
 import com.github.clans.fab.FloatingActionButton
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
+import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.database.ValueEventListener
-import com.google.firebase.database.ktx.getValue
 import com.prolificinteractive.materialcalendarview.CalendarDay
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView
 import com.prolificinteractive.materialcalendarview.OnMonthChangedListener
@@ -30,12 +30,8 @@ class InicialActivity : AppCompatActivity() {
     private lateinit var textSaldacao: TextView
     private lateinit var textSaldo: TextView
     private lateinit var calendario: MaterialCalendarView
-    private var refUsuario = ConfiguracaoFirebase.getFirebaseDatabase().child("usuario")
-    private var refMovimentacao = ConfiguracaoFirebase.getFirebaseDatabase().child("movimentacao")
     private var autenticacao = ConfiguracaoFirebase.getFirebaseAutenticacao()
-    private lateinit var usuario: Usuario
     private lateinit var mesAno: String
-    private val listaMovimentacao = ArrayList<Movimentacao>()
     private lateinit var postListener: ValueEventListener
     private lateinit var postListenerMovimentacao: ValueEventListener
     private lateinit var recyclerMovimentacao: RecyclerView
@@ -63,7 +59,7 @@ class InicialActivity : AppCompatActivity() {
         }
 
         //Configuração do Adapter
-        adapterMov = AdapterMovimentacao(listaMovimentacao, application)
+        adapterMov = AdapterMovimentacao(RealtimeDatabase.listaMovimentacao, application)
 
         //Configuração do RecyclerView
         recyclerMovimentacao.layoutManager = LinearLayoutManager(this)
@@ -75,8 +71,8 @@ class InicialActivity : AppCompatActivity() {
     override fun onStop(){
         super.onStop()
 
-        refUsuario.removeEventListener(postListener)
-        refMovimentacao.removeEventListener(postListenerMovimentacao)
+        RealtimeDatabase.refUsuario.removeEventListener(postListener)
+        RealtimeDatabase.refMovimentacao.removeEventListener(postListenerMovimentacao)
     }
 
     override fun onStart(){
@@ -101,68 +97,106 @@ class InicialActivity : AppCompatActivity() {
     }
 
     private fun inicializarParametros(){
-        calendario = findViewById(R.id.calendar_View)
         fabDespesa = findViewById(R.id.menu_despesa)
         fabReceita = findViewById(R.id.menu_receita)
         textSaldacao = findViewById(R.id.textSaldacaoUsuario)
         textSaldo = findViewById(R.id.textViewSaldoTotal)
         recyclerMovimentacao = findViewById(R.id.RecyclerMovimentacao)
+        calendario = findViewById(R.id.calendar_View)
 
+        configuracaoCalendario()
+        swipe()
+
+    }
+
+    private fun configuracaoCalendario(){
         val meses = arrayOf("Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro")
         calendario.setTitleMonths(meses)
+
         if (calendario.currentDate.month < 10){
             mesAno = "0"+calendario.currentDate.month.toString()+calendario.currentDate.year
         }else{
             calendario.currentDate.month.toString()+calendario.currentDate.year
         }
-        println("TESTE: mesano=${mesAno}")
         calendario.setOnMonthChangedListener(object : OnMonthChangedListener{
             override fun onMonthChanged(widget: MaterialCalendarView?, date: CalendarDay?) {
-                if(date?.month!!.toInt() < 10){
-                    mesAno = "0"+date.month+date.year
+                mesAno = if(date?.month!!.toInt() < 10){
+                    "0"+date.month+date.year
                 }else{
-                    mesAno = date.month.toString()+date.year
+                    date.month.toString()+date.year
                 }
-                refMovimentacao.removeEventListener(postListenerMovimentacao)
+                RealtimeDatabase.refMovimentacao.removeEventListener(postListenerMovimentacao)
                 recuperarListaMovimentacoes()
             }
         })
     }
 
     private fun recuperaResumo(){
-        val idUsuario = autenticacao.currentUser?.email.toString().replace(".", "")
-        postListener = refUsuario.child(idUsuario).addValueEventListener(object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot) {
-                usuario = snapshot.getValue<Usuario>()!!
-                textSaldacao.text = getString(R.string.saladacao) + " ${usuario.nome}"
-                textSaldo.text = String.format("%.2f", (usuario.receitaTotal - usuario.despesaTotal))
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.w("Erro Firebase", "Erro ao acessar o Firebase", error.toException())
-            }
-        })
+        postListener = RealtimeDatabase.recuperarUsuario{
+            println("TESTE: recuperaResumo()")
+            textSaldacao.text = getString(R.string.saladacao) + " ${RealtimeDatabase.usuario.nome}"
+            textSaldo.text = String.format("%.2f", (RealtimeDatabase.usuario.receitaTotal - RealtimeDatabase.usuario.despesaTotal))
+        }
     }
 
-
-
     private fun recuperarListaMovimentacoes(){
-        listaMovimentacao.clear()
-        val idUsuario = autenticacao.currentUser?.email.toString().replace(".", "")
-        postListenerMovimentacao = refMovimentacao.child(idUsuario).child(mesAno).addValueEventListener(object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot) {
-                for(dados in snapshot.children){
-                    var m = dados.getValue<Movimentacao>()!!
-                    println("TESTE: ${m.valor}")
-                    listaMovimentacao.add(m)
-                }
-                adapterMov.notifyDataSetChanged()
+        postListenerMovimentacao = RealtimeDatabase.recuperarMovimentacoes(mesAno, adapterMov)
+    }
+
+    private fun swipe(){
+
+        val itemTouch = object : ItemTouchHelper.Callback(){
+            override fun getMovementFlags(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder
+            ): Int {
+                val swipeFlags = ItemTouchHelper.START or ItemTouchHelper.END
+                return makeMovementFlags(ItemTouchHelper.ACTION_STATE_IDLE,
+                    swipeFlags)
             }
 
-            override fun onCancelled(error: DatabaseError) {
-                Log.w("Erro Firebase", "Erro ao acessar o Firebase", error.toException())
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                return false
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                excluirMovimentacao(viewHolder)
+            }
+        }
+        ItemTouchHelper(itemTouch).attachToRecyclerView(recyclerMovimentacao)
+    }
+
+    private fun excluirMovimentacao(viewHolder: RecyclerView.ViewHolder){
+
+        val alertDialog = AlertDialog.Builder(this)
+        alertDialog.setTitle(getString(R.string.alertDialogTitulo))
+        alertDialog.setMessage(getString(R.string.alertDialogMensagem))
+        alertDialog.setCancelable(false)
+        alertDialog.setPositiveButton("Confirmar", object : DialogInterface.OnClickListener {
+            override fun onClick(p0: DialogInterface?, p1: Int) {
+                val posicao = viewHolder.adapterPosition
+                RealtimeDatabase.movimentacao = RealtimeDatabase.listaMovimentacao[posicao]
+                RealtimeDatabase.excluirMovimentacao(mesAno) { adapterMov.notifyItemRemoved(posicao) }
             }
         })
+        alertDialog.setNegativeButton("Cancelar", object : DialogInterface.OnClickListener {
+            @SuppressLint("NotifyDataSetChanged")
+            override fun onClick(p0: DialogInterface?, p1: Int) {
+                Snackbar.make(
+                    findViewById(R.id.tela_inicial),
+                    "Cancelado",
+                    Snackbar.LENGTH_LONG
+                ).show()
+                adapterMov.notifyDataSetChanged()
+            }
+        })
+
+        val alert = alertDialog.create()
+        alert.show()
     }
 
 }

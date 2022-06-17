@@ -53,5 +53,8 @@
     <string name="saldoTotal">Saldo Total</string>
     <string name="botaoSair">Sair</string>
     <string name="saladacao">Bem-vindo </string>
+    <string name="alertDialogTitulo">Excluir Movimentação da Conta</string>
+    <string name="alertDialogMensagem">Você tem certeza que quer excluir está movimentação da sua conta?</string>
+
 
 </resources>
