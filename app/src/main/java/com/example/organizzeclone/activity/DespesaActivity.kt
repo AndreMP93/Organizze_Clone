@@ -2,43 +2,61 @@ package com.example.organizzeclone.activity
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.widget.EditText
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.example.organizzeclone.R
-import com.example.organizzeclone.config.ConfiguracaoFirebase
+import com.example.organizzeclone.data.autenticacao.AutenticacaoFirebaseDataSource
+import com.example.organizzeclone.data.autenticacao.AutenticacaoRepository
+import com.example.organizzeclone.data.database.DataBaseRepository
+import com.example.organizzeclone.data.database.RealtimeDatabeseFirebaseDataSource
+import com.example.organizzeclone.databinding.ActivityDespesaBinding
 import com.example.organizzeclone.helper.DateUtil
 import com.example.organizzeclone.model.Movimentacao
+import com.example.organizzeclone.viewmodel.despesa.DespesaViewModel
+import com.example.organizzeclone.viewmodel.despesa.DespesaViewModelFactory
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.ValueEventListener
-import com.google.firebase.database.ktx.getValue
+import kotlinx.coroutines.launch
 
 class DespesaActivity : AppCompatActivity() {
+
+    private lateinit var viewModel: DespesaViewModel
+    private lateinit var binding: ActivityDespesaBinding
 
     private lateinit var campoValor: EditText
     private lateinit var campoData: EditText
     private lateinit var campoCategoria: EditText
     private lateinit var campoDescricao: EditText
     private lateinit var fabSalvar: FloatingActionButton
-    private lateinit var movimentacao: Movimentacao
-    private var usuarioReferencia = ConfiguracaoFirebase.getFirebaseDatabase().child("usuario")
-    private var autenticacao = ConfiguracaoFirebase.getFirebaseAutenticacao()
-    private var despesaTotal: Double = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        binding = ActivityDespesaBinding.inflate(layoutInflater)
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_despesa)
+        setContentView(binding.root)
+
+        viewModel = ViewModelProvider(
+            this,
+            DespesaViewModelFactory(
+                DataBaseRepository(RealtimeDatabeseFirebaseDataSource()),
+                AutenticacaoRepository(AutenticacaoFirebaseDataSource())
+            )
+        ).get(DespesaViewModel::class.java)
 
         incializarVariaveos()
-        recuperarDespesaTotal()
 
 
         fabSalvar.setOnClickListener {
             if(validarCamposDespesa()) {
-                salvarDespesa()
-                finish()
+                val movimentacao = Movimentacao(
+                    campoValor.text.toString().toDouble(),
+                    campoData.text.toString(),
+                    campoCategoria.text.toString(),
+                    campoDescricao.text.toString(),
+                    "D"
+                )
+                val mesAno = DateUtil.mesAnoData(campoData.text.toString())
+                salvarDespesa(mesAno, movimentacao)
             }
         }
 
@@ -46,27 +64,30 @@ class DespesaActivity : AppCompatActivity() {
     }
 
     private fun incializarVariaveos(){
-        campoValor = findViewById(R.id.editTextValorDespesa)
-        campoData = findViewById(R.id.editTextDataDespesa)
-        campoCategoria = findViewById(R.id.editTextCategoriaDespesa)
-        campoDescricao = findViewById(R.id.editTextDescricaoDespesa)
-        fabSalvar = findViewById(R.id.fabSalvarDespesa)
+        campoValor = binding.editTextValorDespesa
+        campoData = binding.editTextDataDespesa
+        campoCategoria = binding.editTextCategoriaDespesa
+        campoDescricao = binding.editTextDescricaoDespesa
+        fabSalvar = binding.fabSalvarDespesa
         campoData.setText(DateUtil.dataAtual())
     }
 
-    private fun salvarDespesa(){
-        val despesaGerada = campoValor.text.toString().toDouble()
-        movimentacao = Movimentacao(despesaGerada,
-                                    campoData.text.toString(),
-                                    campoCategoria.text.toString(),
-                                    campoDescricao.text.toString(),
-                                    "D")
-
-        val despesaAtualizada = despesaTotal + despesaGerada
-        movimentacao.salvarBD()
-        atualizarDespesa(despesaAtualizada)
+    private fun salvarDespesa(mesAno: String, movimentacao: Movimentacao){
+        lifecycleScope.launch {
+            try {
+                viewModel.cadastrarMovimentcao(mesAno, movimentacao)
+                finish()
+            }catch (e:Exception){
+                e.message?.let { exibirSnackbar(it) }
+            }
+        }
     }
 
+    private fun exibirSnackbar(menssagem: String){
+        Snackbar.make(binding.root,
+            menssagem,
+            Snackbar.LENGTH_LONG).show()
+    }
     private fun validarCamposDespesa(): Boolean{
         if (campoValor.text.isEmpty()){
             Snackbar.make(
@@ -86,27 +107,5 @@ class DespesaActivity : AppCompatActivity() {
             }
         }
         return true
-    }
-
-    private fun atualizarDespesa(despesaAtualizada: Double){
-        val idUsuario = autenticacao.currentUser?.email?.replace(".", "")
-        usuarioReferencia.child(idUsuario.toString()).child("despesaTotal").setValue(despesaAtualizada)
-
-
-    }
-
-    private fun recuperarDespesaTotal(){
-        val idUsuario = autenticacao.currentUser?.email?.replace(".", "")
-        val postListener = object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot) {
-                despesaTotal = snapshot.getValue<Double>()!!
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.w("TAG", "loadPost:onCancelled", error.toException())
-            }
-        }
-
-        usuarioReferencia.child(idUsuario.toString()).child("despesaTotal").addValueEventListener(postListener)
     }
 }

@@ -2,73 +2,88 @@ package com.example.organizzeclone.activity
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.widget.EditText
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
 import com.example.organizzeclone.R
-import com.example.organizzeclone.config.ConfiguracaoFirebase
+import com.example.organizzeclone.data.autenticacao.AutenticacaoFirebaseDataSource
+import com.example.organizzeclone.data.autenticacao.AutenticacaoRepository
+import com.example.organizzeclone.data.database.DataBaseRepository
+import com.example.organizzeclone.data.database.RealtimeDatabeseFirebaseDataSource
+import com.example.organizzeclone.databinding.ActivityReceitaBinding
 import com.example.organizzeclone.helper.DateUtil
 import com.example.organizzeclone.model.Movimentacao
+import com.example.organizzeclone.viewmodel.receita.ReceitaViewModel
+import com.example.organizzeclone.viewmodel.receita.ReceitaViewModelFactory
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.ValueEventListener
-import com.google.firebase.database.ktx.getValue
+import kotlinx.coroutines.launch
 
 class ReceitaActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivityReceitaBinding
+    private lateinit var viewModel: ReceitaViewModel
 
     private lateinit var campoValor: EditText
     private lateinit var campoData: EditText
     private lateinit var campoCategoria: EditText
     private lateinit var campoDescricao: EditText
     private lateinit var fabSalvar: FloatingActionButton
-    private var userReferencia = ConfiguracaoFirebase.getFirebaseDatabase().child("usuario")
-    private var autenticacao = ConfiguracaoFirebase.getFirebaseAutenticacao()
-    private var receitaTotal = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_receita)
+        binding = ActivityReceitaBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        viewModel = ViewModelProvider(
+            this,
+            ReceitaViewModelFactory(
+                DataBaseRepository(RealtimeDatabeseFirebaseDataSource()),
+                AutenticacaoRepository(AutenticacaoFirebaseDataSource())
+            )
+        ).get(ReceitaViewModel::class.java)
 
         incializarVariaveos()
-        recuperarReceita()
 
         fabSalvar.setOnClickListener {
             if(validarCamposDespesa()){
-                salvarReceita()
-                finish()
+                val movimentacao = Movimentacao(
+                    campoValor.text.toString().toDouble(),
+                    campoData.text.toString(),
+                    campoCategoria.text.toString(),
+                    campoDescricao.text.toString(),
+                    "R"
+                )
+                val mesAno = DateUtil.mesAnoData(campoData.text.toString())
+                salvarReceita(mesAno, movimentacao)
             }
         }
-
     }
 
     private fun incializarVariaveos(){
-        campoValor = findViewById(R.id.editTextValorReceita)
-        campoData = findViewById(R.id.editTextDataReceita)
-        campoCategoria = findViewById(R.id.editTextCategoriaReceita)
-        campoDescricao = findViewById(R.id.editTextDescricaoReceita)
-        fabSalvar = findViewById(R.id.fabSalvarReceita)
+        campoValor = binding.editTextValorReceita
+        campoData = binding.editTextDataReceita
+        campoCategoria = binding.editTextCategoriaReceita
+        campoDescricao = binding.editTextDescricaoReceita
+        fabSalvar = binding.fabSalvarReceita
         campoData.setText(DateUtil.dataAtual())
     }
 
-    private fun salvarReceita(){
-        val receitaGerada = campoValor.text.toString().toDouble()
-        val movimentacao = Movimentacao( receitaGerada,
-                                        campoData.text.toString(),
-                                        campoCategoria.text.toString(),
-                                        campoDescricao.text.toString(),
-                                        "R")
-        val receitaAtualizada = receitaTotal + receitaGerada
-        movimentacao.salvarBD()
-        println("TESTE: a= ${receitaAtualizada} - T= ${receitaTotal} + G = ${receitaGerada}")
-        atualizarReceitaTotal(receitaAtualizada)
-
+    private fun salvarReceita(mesAno: String, movimentacao: Movimentacao){
+        lifecycleScope.launch {
+            try {
+                viewModel.cadastrarMovimentcao(mesAno, movimentacao)
+                finish()
+            }catch (e: Exception){
+                e.message?.let { exibirSnackbar(it) }
+            }
+        }
     }
 
-    private fun atualizarReceitaTotal(novaReceita: Double){
-        val idUsuario = autenticacao.currentUser?.email?.replace(".", "")
-        userReferencia.child(idUsuario.toString()).child("receitaTotal").setValue(novaReceita)
-
+    private fun exibirSnackbar(menssagem: String){
+        Snackbar.make(binding.root,
+            menssagem,
+            Snackbar.LENGTH_LONG).show()
     }
 
     private fun validarCamposDespesa(): Boolean{
@@ -90,23 +105,6 @@ class ReceitaActivity : AppCompatActivity() {
             }
         }
         return true
-    }
-
-    private fun recuperarReceita(){
-        val idUsuario = autenticacao.currentUser?.email?.replace(".", "")
-        val postListener = object : ValueEventListener{
-            override fun onDataChange(snapshot: DataSnapshot) {
-                receitaTotal = snapshot.getValue<Double>()!!
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.w("ERRO", "Erro ao tentar acessar o Firebase")
-            }
-
-        }
-        userReferencia.child(idUsuario.toString()).child("receitaTotal").addValueEventListener(postListener)
-
-
     }
 
 }

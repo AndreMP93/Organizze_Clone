@@ -22,16 +22,5 @@ class Movimentacao() {
         this.tipo = tipo
 
     }
-    fun salvarBD(){
-        val autenticacao = ConfiguracaoFirebase.getFirebaseAutenticacao()
-        val email = autenticacao.currentUser?.email?.replace(".", "")
-        val chaveData = DateUtil.mesAnoData(this.data)
-        val firebase = ConfiguracaoFirebase.getFirebaseDatabase()
-        firebase.child("movimentacao")
-            .child(email.toString())
-            .child(chaveData)
-            .push().setValue(this)
-    }
-
 
 }

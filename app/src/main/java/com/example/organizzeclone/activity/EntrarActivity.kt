@@ -1,86 +1,75 @@
 package com.example.organizzeclone.activity
 
 
-import com.example.organizzeclone.R
-import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import com.example.organizzeclone.config.ConfiguracaoFirebase
-import com.example.organizzeclone.model.Usuario
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import com.example.organizzeclone.data.autenticacao.AutenticacaoFirebaseDataSource
+import com.example.organizzeclone.data.autenticacao.AutenticacaoRepository
+import com.example.organizzeclone.databinding.ActivityEntrarBinding
+import com.example.organizzeclone.viewmodel.entrar.EntrarViewModel
+import com.example.organizzeclone.viewmodel.entrar.EntrarViewModelFactory
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.*
+import kotlinx.coroutines.launch
 
 class EntrarActivity : AppCompatActivity() {
 
-    private lateinit var campoEmail: EditText
-    private lateinit var campoSenha: EditText
-    private lateinit var botaoEntrar: Button
+    private lateinit var binding: ActivityEntrarBinding
+    private lateinit var viewModel: EntrarViewModel
     private lateinit var autenticacao: FirebaseAuth
     private lateinit var excecao: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_entrar)
+        binding = ActivityEntrarBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        inicializarVariaveis()
+        viewModel = ViewModelProvider(
+            this,
+            EntrarViewModelFactory(AutenticacaoRepository(AutenticacaoFirebaseDataSource()))
+        )
+            .get(EntrarViewModel::class.java)
 
-        botaoEntrar.setOnClickListener {
-            val usuario = Usuario(" ", campoEmail.text.toString(), campoSenha.text.toString())
-            if(campoEmail.text.isNotEmpty() and campoSenha.text.isNotEmpty() ){
-                println("TESTE: TESTE -> ${usuario.email} ${usuario.senha} !!!")
-                validarLogin(usuario)
+
+        binding.buttonEntrar.setOnClickListener {
+            val email = binding.editTextEntrarEmail.text.toString()
+            val senha = binding.editTextEntrarSenha.text.toString()
+
+            if(email.isNotEmpty() and senha.isNotEmpty()
+            ){
+                validarLogin(email, senha)
             }else{
-                println("TESTE: CAMPOS VAZIOS")
-
-                Snackbar.make(findViewById(R.id.telaEntrar),
-                    "Preencha todos os campos",
-                    Snackbar.LENGTH_LONG).show()
+                exibirSnackbar("Preencha todos os campos")
             }
         }
     }
 
-    private fun inicializarVariaveis(){
-        campoEmail = findViewById(R.id.editTextEntrarEmail)
-        campoSenha = findViewById(R.id.editTextEntrarSenha)
-        botaoEntrar = findViewById(R.id.buttonEntrar)
-        autenticacao = ConfiguracaoFirebase.getFirebaseAutenticacao()
-    }
 
-    private fun validarLogin(usuario: Usuario){
-        autenticacao.signInWithEmailAndPassword(usuario.email, usuario.senha).addOnCompleteListener {
-                task ->
-            if(task.isSuccessful){
-                abrirTelaPrincipal()
-            }else{
-                excecao = " "
-                try{
-                    throw task.exception!!
-                }catch (e: FirebaseAuthInvalidUserException){
-                    excecao = "Usuáruio não está cadastrado"
-                }catch (e: FirebaseAuthInvalidCredentialsException){
-                    excecao = "Senha não correspondem ao usuário cadastrado"
-                }catch (e: Exception){
-                    excecao = "Erro ao fazer o login do usuario ${e.message}"
-                    e.printStackTrace()
+    private fun validarLogin(email: String, senha: String){
+        lifecycleScope.launch {
+            try {
+                if (viewModel.validarLogin(email, senha)){
+                    finish()
+                }
+            }catch (e: Exception){
+                when(e){
+                    is FirebaseAuthInvalidUserException ->
+                        exibirSnackbar("Usuáruio não está cadastrado")
+                    is FirebaseAuthInvalidCredentialsException ->
+                        exibirSnackbar("Senha não correspondem ao usuário cadastrado")
+                    else ->
+                        exibirSnackbar("Erro ao fazer o login do usuario ${e.message}")
                 }
 
-                Snackbar.make(findViewById(R.id.telaEntrar),
-                    excecao,
-                    Snackbar.LENGTH_LONG).show()
-                println("TESTE: Erro ao fazer o login")
             }
         }
     }
-
-    private fun abrirTelaPrincipal(){
-        startActivity(
-            Intent(
-                application,
-                InicialActivity::class.java
-            )
-        )
-        finish()
+    private fun exibirSnackbar(menssagem: String){
+        Snackbar.make(binding.root,
+            menssagem,
+            Snackbar.LENGTH_LONG).show()
     }
+
 }

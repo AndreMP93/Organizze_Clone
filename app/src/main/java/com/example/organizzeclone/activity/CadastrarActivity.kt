@@ -3,36 +3,61 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
-import com.example.organizzeclone.R
-import com.example.organizzeclone.config.ConfiguracaoFirebase
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.lifecycleScope
+import com.example.organizzeclone.data.autenticacao.AutenticacaoDataSource
+import com.example.organizzeclone.data.autenticacao.AutenticacaoFirebaseDataSource
+import com.example.organizzeclone.data.autenticacao.AutenticacaoRepository
+import com.example.organizzeclone.data.database.DataBaseDataSource
+import com.example.organizzeclone.data.database.DataBaseRepository
+import com.example.organizzeclone.data.database.RealtimeDatabeseFirebaseDataSource
+import com.example.organizzeclone.databinding.ActivityCadastrarBinding
 import com.example.organizzeclone.model.Usuario
+import com.example.organizzeclone.viewmodel.cadastrar.CadastrarViewModel
+import com.example.organizzeclone.viewmodel.cadastrar.CadastrarViewModelFactory
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.auth.*
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.launch
 
 class CadastrarActivity : AppCompatActivity() {
 
+    private lateinit var binding: ActivityCadastrarBinding
+    private lateinit var viewModel: CadastrarViewModel
     private lateinit var campoNome: EditText
     private lateinit var campoEmail: EditText
     private lateinit var campoSenha: EditText
     private lateinit var botaoCadastrar: Button
-    private lateinit var autenticacao: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_cadastrar)
+
+        binding = ActivityCadastrarBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        val dataBaseDataSource: DataBaseDataSource = RealtimeDatabeseFirebaseDataSource()
+        val autenticacaoDataSource: AutenticacaoDataSource = AutenticacaoFirebaseDataSource()
+        viewModel = ViewModelProvider(
+            this,
+            CadastrarViewModelFactory(
+                DataBaseRepository(dataBaseDataSource),
+                AutenticacaoRepository(autenticacaoDataSource)
+            )
+        ).get(CadastrarViewModel::class.java)
 
         inicializarVariaveis()
 
         botaoCadastrar.setOnClickListener {
-            val usuario = Usuario(campoNome.text.toString(), campoEmail.text.toString(), campoSenha.text.toString())
+
             if(campoNome.text.isNotEmpty() and campoEmail.text.isNotEmpty() and campoSenha.text.isNotEmpty() ){
+                val usuario = Usuario(
+                    binding.editTextCadastroNome.text.toString(),
+                    binding.editTextCadastroEmail.text.toString(),
+                    binding.editTextCadastroSenha.text.toString()
+                )
                 cadastrarUsusario(usuario)
+
             }else{
-                Snackbar.make(findViewById(R.id.telaCadastro),
-                    "Preencha todos os campos",
-                    Snackbar.LENGTH_LONG).show()
+                exibirSnackbar("Preencha todos os campos")
             }
         }
 
@@ -40,44 +65,39 @@ class CadastrarActivity : AppCompatActivity() {
     }
 
     private fun inicializarVariaveis(){
-        campoNome = findViewById(R.id.editTextCadastroNome)
-        campoEmail = findViewById(R.id.editTextCadastroEmail)
-        campoSenha = findViewById(R.id.editTextCadastroSenha)
-        botaoCadastrar = findViewById(R.id.buttonCadastrar)
+        campoNome = binding.editTextCadastroNome
+        campoEmail = binding.editTextCadastroEmail
+        campoSenha = binding.editTextCadastroSenha
+        botaoCadastrar = binding.buttonCadastrar
     }
 
-
     private fun cadastrarUsusario(usuario: Usuario){
-        autenticacao = ConfiguracaoFirebase.getFirebaseAutenticacao()
-        autenticacao.createUserWithEmailAndPassword(
-            usuario.email,
-            usuario.senha
-        ).addOnCompleteListener{ task ->
-            if(task.isSuccessful){
-                usuario.salvarUsuarios()
-                finish()
-            }else {
-                var excecao = " "
-                try{
-                    throw task.exception!!
-                }catch (e: FirebaseAuthWeakPasswordException){
-
-                    excecao = "Digite uma senha mais forte"
-                }catch (e: FirebaseAuthInvalidCredentialsException){
-                    excecao = "Por favor, digite um email valido"
-                }catch (e: FirebaseAuthUserCollisionException){
-                    excecao = "Está conta já existe"
-                }catch (e: Exception){
-                    excecao = "Erro ao cadastrar o usuario ${e.message}"
-                    e.printStackTrace()
+        lifecycleScope.launch {
+            try {
+                if (viewModel.cadastrarUsusario(usuario)){
+                    finish()
                 }
-                Snackbar.make(findViewById(R.id.telaCadastro),
-                    excecao,
-                    Snackbar.LENGTH_LONG).show()
+            }catch (e: java.lang.Exception){
+                when(e){
+                    is FirebaseAuthWeakPasswordException ->
+                        exibirSnackbar("Digite uma senha mais forte")
+
+                    is FirebaseAuthInvalidCredentialsException ->
+                        exibirSnackbar("Por favor, digite um email valido")
+
+                    is FirebaseAuthUserCollisionException ->
+                        exibirSnackbar("Está conta já existe")
+                    else ->
+                        exibirSnackbar("Erro: ao cadastrar novo ususaio")
+                }
             }
         }
     }
 
-
+    private fun exibirSnackbar(menssagem: String){
+        Snackbar.make(binding.root,
+            menssagem,
+            Snackbar.LENGTH_LONG).show()
+    }
 
 }

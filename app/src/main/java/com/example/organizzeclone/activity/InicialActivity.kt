@@ -9,40 +9,56 @@ import android.view.Menu
 import android.view.MenuItem
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.organizzeclone.R
 import com.example.organizzeclone.adapter.AdapterMovimentacao
-import com.example.organizzeclone.config.ConfiguracaoFirebase
-import com.example.organizzeclone.helper.RealtimeDatabase
+import com.example.organizzeclone.data.autenticacao.AutenticacaoFirebaseDataSource
+import com.example.organizzeclone.data.autenticacao.AutenticacaoRepository
+import com.example.organizzeclone.data.database.DataBaseRepository
+import com.example.organizzeclone.data.database.RealtimeDatabeseFirebaseDataSource
+import com.example.organizzeclone.databinding.ActivityInicialBinding
+import com.example.organizzeclone.viewmodel.inicial.InicialViewModel
+import com.example.organizzeclone.viewmodel.inicial.InicialViewModelFactory
 import com.github.clans.fab.FloatingActionButton
 import com.google.android.material.snackbar.Snackbar
-import com.google.firebase.database.ValueEventListener
 import com.prolificinteractive.materialcalendarview.CalendarDay
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView
 import com.prolificinteractive.materialcalendarview.OnMonthChangedListener
 
 class InicialActivity : AppCompatActivity() {
 
+    private lateinit var viewModel: InicialViewModel
+    private lateinit var binding: ActivityInicialBinding
+
     private lateinit var fabDespesa: FloatingActionButton
     private lateinit var fabReceita: FloatingActionButton
     private lateinit var textSaldacao: TextView
     private lateinit var textSaldo: TextView
     private lateinit var calendario: MaterialCalendarView
-    private var autenticacao = ConfiguracaoFirebase.getFirebaseAutenticacao()
+
     private lateinit var mesAno: String
-    private lateinit var postListener: ValueEventListener
-    private lateinit var postListenerMovimentacao: ValueEventListener
     private lateinit var recyclerMovimentacao: RecyclerView
     private lateinit var adapterMov: AdapterMovimentacao
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_inicial)
+        binding = ActivityInicialBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        viewModel = ViewModelProvider(
+            this,
+            InicialViewModelFactory(
+                DataBaseRepository(RealtimeDatabeseFirebaseDataSource()),
+                AutenticacaoRepository(AutenticacaoFirebaseDataSource())
+            )
+        ).get(InicialViewModel::class.java)
 
         inicializarParametros()
-        setSupportActionBar(findViewById(R.id.toolbarInicial))
+        setSupportActionBar(binding.toolbarInicial)
 
         fabDespesa.setOnClickListener {
             startActivity(Intent(
@@ -58,29 +74,8 @@ class InicialActivity : AppCompatActivity() {
             ))
         }
 
-        //Configuração do Adapter
-        adapterMov = AdapterMovimentacao(RealtimeDatabase.listaMovimentacao, application)
-
-        //Configuração do RecyclerView
-        recyclerMovimentacao.layoutManager = LinearLayoutManager(this)
-        recyclerMovimentacao.setHasFixedSize(true)
-        //recyclerMovimentacao.addItemDecoration()
-        recyclerMovimentacao.adapter = adapterMov
     }
 
-    override fun onStop(){
-        super.onStop()
-
-        RealtimeDatabase.refUsuario.removeEventListener(postListener)
-        RealtimeDatabase.refMovimentacao.removeEventListener(postListenerMovimentacao)
-    }
-
-    override fun onStart(){
-        super.onStart()
-
-        recuperaResumo()
-        recuperarListaMovimentacoes()
-    }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.menu_tela_inicial, menu)
@@ -89,24 +84,60 @@ class InicialActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when(item.itemId){
-            R.id.menuSair-> {autenticacao.signOut()
-                finish()}
+            R.id.menuSair-> {
+                viewModel.signOut()
+                finish()
+            }
 
         }
         return super.onOptionsItemSelected(item)
     }
 
+    override fun onStart(){
+        super.onStart()
+        viewModel.recuperarDadosUsuarioAtual()
+        viewModel.recuperarListaDeMovimentacoes(mesAno)
+
+
+        viewModel.listaMovimentacoes.observe(this, Observer {
+            adapterMov = AdapterMovimentacao(
+                viewModel.listaMovimentacoes.value!!,
+                applicationContext
+            )
+            //Configuração do RecyclerView
+            recyclerMovimentacao.layoutManager = LinearLayoutManager(this)
+            recyclerMovimentacao.setHasFixedSize(true)
+            //recyclerMovimentacao.addItemDecoration()
+            recyclerMovimentacao.adapter = adapterMov
+        })
+
+        viewModel.erroManager.observe(this, Observer {
+            if(it != ""){
+                exibirSnackbar(it)
+            }
+        })
+
+        viewModel.dadosUsuario.observe(this, Observer {
+            exibirResumoDosDadosDoUsuario()
+        })
+    }
+
+
     private fun inicializarParametros(){
-        fabDespesa = findViewById(R.id.menu_despesa)
-        fabReceita = findViewById(R.id.menu_receita)
-        textSaldacao = findViewById(R.id.textSaldacaoUsuario)
-        textSaldo = findViewById(R.id.textViewSaldoTotal)
-        recyclerMovimentacao = findViewById(R.id.RecyclerMovimentacao)
-        calendario = findViewById(R.id.calendar_View)
+        fabDespesa = binding.menuDespesa
+        fabReceita = binding.menuReceita
+        textSaldacao = binding.textSaldacaoUsuario
+        textSaldo = binding.textViewSaldoTotal
+        recyclerMovimentacao = binding.RecyclerMovimentacao
+        calendario = binding.calendarView
 
         configuracaoCalendario()
         swipe()
+    }
 
+    private fun exibirResumoDosDadosDoUsuario(){
+        textSaldo.text = String.format("%.2f", (viewModel.dadosUsuario.value!!.receitaTotal - viewModel.dadosUsuario.value!!.despesaTotal))
+        textSaldacao.text = getString(R.string.saldadacao) + " " + viewModel.dadosUsuario.value!!.nome
     }
 
     private fun configuracaoCalendario(){
@@ -125,26 +156,13 @@ class InicialActivity : AppCompatActivity() {
                 }else{
                     date.month.toString()+date.year
                 }
-                RealtimeDatabase.refMovimentacao.removeEventListener(postListenerMovimentacao)
-                recuperarListaMovimentacoes()
+                viewModel.recuperarListaDeMovimentacoes(mesAno)
             }
         })
     }
 
-    private fun recuperaResumo(){
-        postListener = RealtimeDatabase.recuperarUsuario{
-            println("TESTE: recuperaResumo()")
-            textSaldacao.text = getString(R.string.saladacao) + " ${RealtimeDatabase.usuario.nome}"
-            textSaldo.text = String.format("%.2f", (RealtimeDatabase.usuario.receitaTotal - RealtimeDatabase.usuario.despesaTotal))
-        }
-    }
-
-    private fun recuperarListaMovimentacoes(){
-        postListenerMovimentacao = RealtimeDatabase.recuperarMovimentacoes(mesAno, adapterMov)
-    }
 
     private fun swipe(){
-
         val itemTouch = object : ItemTouchHelper.Callback(){
             override fun getMovementFlags(
                 recyclerView: RecyclerView,
@@ -171,7 +189,6 @@ class InicialActivity : AppCompatActivity() {
     }
 
     private fun excluirMovimentacao(viewHolder: RecyclerView.ViewHolder){
-
         val alertDialog = AlertDialog.Builder(this)
         alertDialog.setTitle(getString(R.string.alertDialogTitulo))
         alertDialog.setMessage(getString(R.string.alertDialogMensagem))
@@ -179,24 +196,27 @@ class InicialActivity : AppCompatActivity() {
         alertDialog.setPositiveButton("Confirmar", object : DialogInterface.OnClickListener {
             override fun onClick(p0: DialogInterface?, p1: Int) {
                 val posicao = viewHolder.adapterPosition
-                RealtimeDatabase.movimentacao = RealtimeDatabase.listaMovimentacao[posicao]
-                RealtimeDatabase.excluirMovimentacao(mesAno) { adapterMov.notifyItemRemoved(posicao) }
+                viewModel.excluirMovimentacao(mesAno, adapterMov.lista[posicao])
+                adapterMov.notifyItemRemoved(posicao)
             }
         })
         alertDialog.setNegativeButton("Cancelar", object : DialogInterface.OnClickListener {
             @SuppressLint("NotifyDataSetChanged")
             override fun onClick(p0: DialogInterface?, p1: Int) {
-                Snackbar.make(
-                    findViewById(R.id.tela_inicial),
-                    "Cancelado",
-                    Snackbar.LENGTH_LONG
-                ).show()
+                exibirSnackbar("Cancelado")
                 adapterMov.notifyDataSetChanged()
             }
         })
-
         val alert = alertDialog.create()
         alert.show()
+    }
+
+    private fun exibirSnackbar(menssagem: String){
+        Snackbar.make(
+            binding.root,
+            menssagem,
+            Snackbar.LENGTH_LONG
+        ).show()
     }
 
 }
