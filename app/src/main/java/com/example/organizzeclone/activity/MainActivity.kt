@@ -31,10 +31,10 @@ class MainActivity : IntroActivity() {
         isButtonBackVisible = false
         isButtonNextVisible = false
 
-        /*adicionarSlide(R.layout.intro_01, true)
+        adicionarSlide(R.layout.intro_01, true)
         adicionarSlide(R.layout.intro_02, true)
         adicionarSlide(R.layout.intro_03, true)
-        adicionarSlide(R.layout.intro_04, true)*/
+        adicionarSlide(R.layout.intro_04, true)
         adicionarSlide(R.layout.intro_cadastro, false)
 
     }
