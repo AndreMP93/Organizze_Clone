@@ -28,7 +28,7 @@ class InicialViewModel(private val dataBaseRepository: DataBaseRepository,
     fun recuperarDadosUsuarioAtual() {
         viewModelScope.launch {
             try {
-                val id = autenticacaoRepository.recuperarEmailUsuarioAutal().replace(".", "")
+                val id = autenticacaoRepository.recuperarIdUsuarioAutal()
                 val usuario = dataBaseRepository.recuperarDadosDoUsuario(id)
                 dadosUsuario.postValue(usuario)
             }catch (e: Exception){
@@ -40,7 +40,7 @@ class InicialViewModel(private val dataBaseRepository: DataBaseRepository,
     fun recuperarListaDeMovimentacoes(mesAno: String){
         viewModelScope.launch {
             try {
-                val id = autenticacaoRepository.recuperarEmailUsuarioAutal().replace(".", "")
+                val id = autenticacaoRepository.recuperarIdUsuarioAutal()
                 val lista = dataBaseRepository.recuperaListaDeMovimentacaoes(
                     mesAno,
                     id)
@@ -55,7 +55,7 @@ class InicialViewModel(private val dataBaseRepository: DataBaseRepository,
     fun excluirMovimentacao(mesAno: String, movimentacao: Movimentacao){
         viewModelScope.launch {
             try {
-                val idUsuario = autenticacaoRepository.recuperarEmailUsuarioAutal().replace(".","")
+                val idUsuario = autenticacaoRepository.recuperarIdUsuarioAutal()
                 dataBaseRepository.excluirMovimentacao(mesAno, movimentacao,idUsuario)
                 recuperarListaDeMovimentacoes(mesAno)
                 recuperarDadosUsuarioAtual()

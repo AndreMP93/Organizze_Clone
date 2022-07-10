@@ -12,9 +12,8 @@ class CadastrarViewModel(
 
     suspend fun cadastrarUsusario(usuario: Usuario): Boolean{
         if (autenticacaoRepository.cadastrarUsuario(usuario)){
-            val id = autenticacaoRepository.recuperarEmailUsuarioAutal()
-                .replace(".", "")
-            return dataBaseRepository.salvarDadosDoUsuario(id, usuario)
+            usuario.id = autenticacaoRepository.recuperarIdUsuarioAutal()
+            return dataBaseRepository.salvarDadosDoUsuario(usuario.id, usuario)
         }
         return false
     }

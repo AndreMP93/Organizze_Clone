@@ -9,7 +9,7 @@ interface AutenticacaoDataSource {
 
     suspend fun validarLogin(email: String, senha: String): Boolean
 
-    suspend fun recuperarEmailUsuarioAutal(): String
+    suspend fun recuperarIdUsuarioAutal(): String
 
     fun singOut()
 

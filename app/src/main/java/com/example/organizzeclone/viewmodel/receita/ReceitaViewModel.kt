@@ -11,7 +11,7 @@ class ReceitaViewModel(private val dataBaseRepository: DataBaseRepository,
 ) : ViewModel() {
 
     suspend fun cadastrarMovimentcao(mesAno: String, movimentcao: Movimentacao){
-        val idUsuario = autenticacaoRepository.recuperarEmailUsuarioAutal().replace(".", "")
+        val idUsuario = autenticacaoRepository.recuperarIdUsuarioAutal()
         if (dataBaseRepository.cadastrarMovimentacao(movimentcao, mesAno, idUsuario)){
             atualizarReceitatotal(movimentcao.valor)
         }
@@ -20,12 +20,12 @@ class ReceitaViewModel(private val dataBaseRepository: DataBaseRepository,
     private suspend fun atualizarReceitatotal(valor: Double){
         val usuario = recuperarDadosUsuarioAtual()
         usuario.receitaTotal+=valor
-        dataBaseRepository.atualizarDadosDoUsuario(usuario.getId(), usuario)
+        dataBaseRepository.atualizarDadosDoUsuario(usuario.id, usuario)
 
     }
 
     private suspend fun recuperarDadosUsuarioAtual() : Usuario {
-        val id = autenticacaoRepository.recuperarEmailUsuarioAutal().replace(".", "")
+        val id = autenticacaoRepository.recuperarIdUsuarioAutal()
         return dataBaseRepository.recuperarDadosDoUsuario(id)
     }
 

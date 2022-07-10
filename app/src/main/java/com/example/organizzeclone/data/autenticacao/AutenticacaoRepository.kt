@@ -10,7 +10,7 @@ class AutenticacaoRepository (private val dataSource: AutenticacaoDataSource) {
 
     suspend fun validarLogin(email: String, senha: String) = dataSource.validarLogin(email, senha)
 
-    suspend fun recuperarEmailUsuarioAutal() = dataSource.recuperarEmailUsuarioAutal()
+    suspend fun recuperarIdUsuarioAutal() = dataSource.recuperarIdUsuarioAutal()
 
     fun signOut() = dataSource.singOut()
 

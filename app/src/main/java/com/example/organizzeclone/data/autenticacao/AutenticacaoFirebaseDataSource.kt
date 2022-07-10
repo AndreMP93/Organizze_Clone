@@ -47,8 +47,8 @@ class AutenticacaoFirebaseDataSource : AutenticacaoDataSource {
         }
     }
 
-    override suspend fun recuperarEmailUsuarioAutal(): String {
-        return autenticacao.currentUser?.email.toString()
+    override suspend fun recuperarIdUsuarioAutal(): String {
+        return autenticacao.currentUser?.uid.toString()
     }
 
     override fun singOut() {

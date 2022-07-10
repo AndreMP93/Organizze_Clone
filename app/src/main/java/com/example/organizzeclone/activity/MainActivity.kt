@@ -6,6 +6,7 @@ import android.view.View
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.example.organizzeclone.R
+import com.example.organizzeclone.config.ConfiguracaoFirebase
 import com.example.organizzeclone.data.autenticacao.AutenticacaoFirebaseDataSource
 import com.example.organizzeclone.data.autenticacao.AutenticacaoRepository
 import com.example.organizzeclone.viewmodel.main.MainViewModel
@@ -20,8 +21,8 @@ class MainActivity : IntroActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        /*val aut = ConfiguracaoFirebase.getFirebaseAutenticacao()
-        aut.signOut()*/
+        val aut = ConfiguracaoFirebase.getFirebaseAutenticacao()
+        aut.signOut()
 
         viewModel = ViewModelProvider(
             this,
